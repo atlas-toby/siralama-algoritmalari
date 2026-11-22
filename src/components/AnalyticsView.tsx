@@ -56,35 +56,54 @@ export function AnalyticsView({
 }: AnalyticsViewProps) {
   const [selectedMetric, setSelectedMetric] = useState<MetricKey>('arrayAccesses');
   const [useLogScale, setUseLogScale] = useState<boolean>(false);
+  const [groupFilter, setGroupFilter] = useState<'all' | 'classic' | 'humor' | 'custom'>('all');
   const [sortCol, setSortCol] = useState<MetricKey>('arrayAccesses');
   const [sortAsc, setSortAsc] = useState<boolean>(true);
 
+  const filteredBenchmarks = useMemo(() => {
+    if (groupFilter === 'classic') {
+      return benchmarks.filter((b) => b.category !== 'Mizahi / Egzotik' && b.category !== 'Custom');
+    }
+    if (groupFilter === 'humor') {
+      return benchmarks.filter((b) => b.category === 'Mizahi / Egzotik');
+    }
+    if (groupFilter === 'custom') {
+      return benchmarks.filter((b) => b.category === 'Custom');
+    }
+    return benchmarks;
+  }, [benchmarks, groupFilter]);
+
   const sortedBenchmarks = useMemo(() => {
-    return [...benchmarks].sort((a, b) => {
+    return [...filteredBenchmarks].sort((a, b) => {
       const diff = a[sortCol] - b[sortCol];
       return sortAsc ? diff : -diff;
     });
-  }, [benchmarks, sortCol, sortAsc]);
+  }, [filteredBenchmarks, sortCol, sortAsc]);
 
   const chartData = useMemo(() => {
-    return [...benchmarks]
+    return [...filteredBenchmarks]
       .sort((a, b) => a[selectedMetric] - b[selectedMetric])
       .map((item) => ({
         ...item,
         shortName: item.algorithmName.replace(/\s*\([^)]*\)/g, ''),
         plotValue: useLogScale ? Math.max(0.5, item[selectedMetric]) : item[selectedMetric],
       }));
-  }, [benchmarks, selectedMetric, useLogScale]);
+  }, [filteredBenchmarks, selectedMetric, useLogScale]);
+
+  const validBenchmarks = useMemo(
+    () => benchmarks.filter((b) => !b.capped && b.survivingCount === undefined),
+    [benchmarks]
+  );
 
   const topFastest = useMemo(() => {
-    if (benchmarks.length === 0) return null;
-    return [...benchmarks].sort((a, b) => a.cpuTimeMs - b.cpuTimeMs)[0];
-  }, [benchmarks]);
+    if (validBenchmarks.length === 0) return null;
+    return [...validBenchmarks].sort((a, b) => a.cpuTimeMs - b.cpuTimeMs)[0];
+  }, [validBenchmarks]);
 
   const topLowestAccess = useMemo(() => {
-    if (benchmarks.length === 0) return null;
-    return [...benchmarks].sort((a, b) => a.arrayAccesses - b.arrayAccesses)[0];
-  }, [benchmarks]);
+    if (validBenchmarks.length === 0) return null;
+    return [...validBenchmarks].sort((a, b) => a.arrayAccesses - b.arrayAccesses)[0];
+  }, [validBenchmarks]);
 
   const handleSort = (key: MetricKey) => {
     if (sortCol === key) {
@@ -119,7 +138,7 @@ export function AnalyticsView({
             className="m3-focus inline-flex items-center gap-2 rounded-full bg-[var(--md-sys-color-primary)] px-4 py-2.5 text-sm font-medium text-[var(--md-sys-color-on-primary)] transition-transform duration-150 hover:opacity-95 active:scale-[0.98] whitespace-nowrap shrink-0 cursor-pointer"
           >
             <RefreshCw className="h-4 w-4" aria-hidden="true" />
-            <span>11 Algoritmayı Yeniden Ölç</span>
+            <span>Tümünü Yeniden Ölç ({benchmarks.length})</span>
           </button>
 
           <button
@@ -199,6 +218,34 @@ export function AnalyticsView({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <div
+              role="group"
+              aria-label="Algoritma kategorisi"
+              className="inline-flex items-center rounded-full border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)] p-0.5"
+            >
+              {(
+                [
+                  { id: 'all', label: 'Tümü' },
+                  { id: 'classic', label: 'Klasik' },
+                  { id: 'humor', label: 'Mizahi' },
+                  { id: 'custom', label: 'Custom' },
+                ] as const
+              ).map((g) => (
+                <button
+                  key={g.id}
+                  type="button"
+                  onClick={() => setGroupFilter(g.id)}
+                  className={`m3-focus rounded-full px-3 py-1 text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    groupFilter === g.id
+                      ? 'bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)]'
+                      : 'text-[var(--md-sys-color-on-surface-variant)] hover:text-[var(--md-sys-color-on-surface)]'
+                  }`}
+                >
+                  {g.label}
+                </button>
+              ))}
+            </div>
+
             <div
               role="group"
               aria-label="Kıyaslama metriği"
@@ -460,7 +507,17 @@ export function AnalyticsView({
                     }`}
                   >
                     <td className="px-5 py-3 font-medium text-[var(--md-sys-color-on-surface)] whitespace-nowrap">
-                      {row.algorithmName}
+                      <span>{row.algorithmName}</span>
+                      {row.capped && (
+                        <span className="ml-2 text-[11px] font-normal text-[var(--md-sys-color-error)]">
+                          · Limit (45B adım)
+                        </span>
+                      )}
+                      {row.survivingCount !== undefined && (
+                        <span className="ml-2 text-[11px] font-normal text-[var(--md-sys-color-on-surface-variant)]">
+                          · {row.survivingCount} eleman kaldı
+                        </span>
+                      )}
                     </td>
                     <td className="px-3 py-3 text-xs text-[var(--md-sys-color-on-surface-variant)] whitespace-nowrap">
                       {row.category} · {row.stable ? 'Kararlı' : 'Kararsız'}

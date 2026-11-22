@@ -2,11 +2,13 @@ import {
   AlgorithmId,
   AlgorithmMeta,
   BenchmarkEntry,
+  CustomAlgorithmStats,
   ScalingPoint,
   SortMetrics,
   SortStep,
 } from '../types/algorithm';
 import { computeSortedness, generateDistribution } from '../utils/datasetUtils';
+import { createNetlimiterlanGenerator, NETLIMITERLAN_META } from './netlimiterlanSort';
 
 export const ALGORITHMS: AlgorithmMeta[] = [
   {
@@ -185,6 +187,135 @@ export const ALGORITHMS: AlgorithmMeta[] = [
     howItWorks:
       'Her geçişte ardışık çiftleri kıyaslar; erken durdurma bayrağı sayesinde dizi sıralandığında gereksiz turları keser.',
   },
+  {
+    id: 'bogo',
+    name: 'Bogo Sort (Şans Karıştırması)',
+    englishName: 'Bogo Sort',
+    category: 'Mizahi / Egzotik',
+    bestTime: 'O(n)',
+    avgTime: 'O((n+1)!)',
+    worstTime: 'O(∞)',
+    space: 'O(1)',
+    stable: false,
+    inPlace: true,
+    comparisonBased: true,
+    summary: 'Dizi sıralı değilse tamamını rastgele karıştırır ve şansa bırakır.',
+    howItWorks:
+      'Her turda dizinin sıralı olup olmadığını kontrol eder; değilse Fisher-Yates ile baştan sona karıştırır. Küçük dizilerde (N≤8) şans eseri çözülebilir, büyük dizilerde evrenin yaşı yetmeyebilir.',
+  },
+  {
+    id: 'bozo',
+    name: 'Bozo Sort (Rastgele Takas)',
+    englishName: 'Bozo Sort',
+    category: 'Mizahi / Egzotik',
+    bestTime: 'O(n)',
+    avgTime: 'O((n+1)!)',
+    worstTime: 'O(∞)',
+    space: 'O(1)',
+    stable: false,
+    inPlace: true,
+    comparisonBased: true,
+    summary: 'Bogo Sort’un daha tembel kuzeni: rastgele iki eleman seçip yer değiştirir.',
+    howItWorks:
+      'Tüm diziyi karıştırmaya bile üşenir; rastgele iki indeks seçip takas eder, sonra dizinin mucizevi biçimde sıralanıp sıralanmadığına bakar.',
+  },
+  {
+    id: 'stalin',
+    name: 'Stalin Sort (Eleyerek Sırala)',
+    englishName: 'Stalin Sort',
+    category: 'Mizahi / Egzotik',
+    bestTime: 'O(n)',
+    avgTime: 'O(n)',
+    worstTime: 'O(n)',
+    space: 'O(1)',
+    stable: true,
+    inPlace: true,
+    comparisonBased: true,
+    summary: 'Sırayı bozan elemanları diziden kalıcı olarak eleyerek O(n) sürede bitirir.',
+    howItWorks:
+      'Diziyi soldan sağa tek geçişte tarar; kendisinden önceki en büyük değerden küçük olan her elemanı acımasızca diziden siler. Geriye kalanlar kesinlikle sıralıdır!',
+  },
+  {
+    id: 'thanos',
+    name: 'Thanos Sort (Yarıya İndir)',
+    englishName: 'Thanos Sort',
+    category: 'Mizahi / Egzotik',
+    bestTime: 'O(n)',
+    avgTime: 'O(n log n)',
+    worstTime: 'O(n log n)',
+    space: 'O(1)',
+    stable: true,
+    inPlace: true,
+    comparisonBased: true,
+    summary: 'Dizi sıralı değilse parmak şıklatıp elemanların yarısını rastgele yok eder.',
+    howItWorks:
+      'Evrende denge sağlanana (dizi sıralı olana) kadar her turda rastgele elemanların yarısını siler. En kötü ihtimalle tek bir eleman kalır ve tek eleman daima sıralıdır.',
+  },
+  {
+    id: 'miracle',
+    name: 'Miracle Sort (Mucize Bekle)',
+    englishName: 'Miracle Sort',
+    category: 'Mizahi / Egzotik',
+    bestTime: 'O(n)',
+    avgTime: 'O(∞)',
+    worstTime: 'O(∞)',
+    space: 'O(1)',
+    stable: true,
+    inPlace: true,
+    comparisonBased: true,
+    summary: 'Hiçbir şeye dokunmadan kozmik ışınların RAM bitlerini sıralamasını bekler.',
+    howItWorks:
+      'Diziyi sıralı mı diye kontrol eder; değilse hiçbir değişiklik yapmadan sabırla tekrar kontrol eder. Yalnızca zaten sıralı veride veya gerçek bir kozmik mucizede tamamlanır.',
+  },
+  {
+    id: 'stooge',
+    name: 'Stooge Sort (Üç Ahbap)',
+    englishName: 'Stooge Sort',
+    category: 'Mizahi / Egzotik',
+    bestTime: 'O(n^2.71)',
+    avgTime: 'O(n^2.71)',
+    worstTime: 'O(n^2.71)',
+    space: 'O(log n)',
+    stable: false,
+    inPlace: true,
+    comparisonBased: true,
+    summary: 'Önce ilk 2/3’ü, sonra son 2/3’ü, sonra tekrar ilk 2/3’ü özyinelemeli sıralar.',
+    howItWorks:
+      'Adını The Three Stooges komedi ekibinden alır. Bubble Sort’tan bile yavaş olmasına rağmen deterministiktir ve sonunda diziyi gerçekten eksiksiz sıralar.',
+  },
+  {
+    id: 'gnome',
+    name: 'Gnome Sort (Bahçe Cücesi)',
+    englishName: 'Gnome Sort',
+    category: 'Mizahi / Egzotik',
+    bestTime: 'O(n)',
+    avgTime: 'O(n²)',
+    worstTime: 'O(n²)',
+    space: 'O(1)',
+    stable: true,
+    inPlace: true,
+    comparisonBased: true,
+    summary: 'Saksı dizen bir bahçe cücesi gibi bir adım ileri, sıra bozuksa bir adım geri gider.',
+    howItWorks:
+      'Tek bir döngüyle mevcut eleman ile bir öncekini kıyaslar: sıradaysa sağa yürür, değilse yer değiştirip sola geri adım atar.',
+  },
+  {
+    id: 'pancake',
+    name: 'Pancake Sort (Pankek Çevirme)',
+    englishName: 'Pancake Sort',
+    category: 'Mizahi / Egzotik',
+    bestTime: 'O(n)',
+    avgTime: 'O(n²)',
+    worstTime: 'O(n²)',
+    space: 'O(1)',
+    stable: false,
+    inPlace: true,
+    comparisonBased: true,
+    summary: 'Yalnızca spatulayla dizinin başından itibaren blokları ters çevirerek sıralar.',
+    howItWorks:
+      'Tek izin verilen işlem [0..k] aralığını komple ters çevirmektir (flip). En büyük elemanı önce en başa, sonra hedef son konuma çevirerek yığını düzenler.',
+  },
+  NETLIMITERLAN_META,
 ];
 
 export const ALGORITHM_MAP: Record<AlgorithmId, AlgorithmMeta> = ALGORITHMS.reduce(
@@ -204,6 +335,7 @@ interface EngineState {
   steps: number;
   startTime: number;
   passLabel: string;
+  customStats?: CustomAlgorithmStats;
 }
 
 function makeStep(
@@ -226,6 +358,7 @@ function makeStep(
     elapsedMs: Math.round((performance.now() - st.startTime) * 10) / 10,
     sortedness: computeSorted ? computeSortedness(st.arr) : phase === 'done' ? 100 : -1,
     passLabel: st.passLabel,
+    customStats: st.customStats ? { ...st.customStats } : undefined,
   };
   return {
     array: st.arr,
@@ -908,12 +1041,355 @@ export function* createSortGenerator(
         }
         break;
       }
+
+      case 'bogo': {
+        const isSorted = () => {
+          for (let i = 0; i < arr.length - 1; i++) {
+            if (compareIdx(i, i + 1) > 0) return false;
+          }
+          return true;
+        };
+
+        let attempt = 0;
+        const quips = [
+          'Hâlâ sıralı değil, tüm dizi tekrar karıştırılıyor...',
+          'Şans bu turda gülmedi, yeni bir permütasyon deneniyor...',
+          'İstatistiksel olarak bir gün mutlaka tutacak...',
+          'Rastgelelik motoru tam gaz çalışıyor...',
+        ];
+
+        while (!isSorted()) {
+          attempt++;
+          st.passLabel = `Bogo Denemesi #${attempt}`;
+          // Fisher-Yates full shuffle
+          for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            swap(i, j);
+          }
+          const pick = Math.floor(Math.random() * arr.length);
+          const pick2 = Math.floor(Math.random() * arr.length);
+          yield makeStep(
+            st,
+            [pick, pick2],
+            [],
+            -1,
+            'sorting',
+            arr[pick],
+            `Deneme #${attempt}: ${quips[attempt % quips.length]}`
+          );
+        }
+        break;
+      }
+
+      case 'bozo': {
+        const isSorted = () => {
+          for (let i = 0; i < arr.length - 1; i++) {
+            if (compareIdx(i, i + 1) > 0) return false;
+          }
+          return true;
+        };
+
+        let attempt = 0;
+        while (!isSorted()) {
+          attempt++;
+          st.passLabel = `Bozo Takası #${attempt}`;
+          const i = Math.floor(Math.random() * arr.length);
+          let j = Math.floor(Math.random() * arr.length);
+          if (arr.length > 1 && i === j) {
+            j = (j + 1) % arr.length;
+          }
+          swap(i, j);
+          yield makeStep(
+            st,
+            [i, j],
+            [],
+            -1,
+            'sorting',
+            arr[i],
+            `Takas #${attempt}: Rastgele seçilen #${i} ve #${j} yer değiştirdi; bakalım tuttu mu?`
+          );
+        }
+        break;
+      }
+
+      case 'stalin': {
+        st.passLabel = 'Tek Geçişli Eleme';
+        let purged = 0;
+        let i = 1;
+        while (i < arr.length) {
+          const cmp = compareIdx(i, i - 1);
+          if (cmp < 0) {
+            const doomedVal = arr[i];
+            yield makeStep(
+              st,
+              [i],
+              [i - 1],
+              -1,
+              'sorting',
+              doomedVal,
+              `Eleman #${i} (${doomedVal}) sırayı bozduğu için eleniyor! (Toplam elenen: ${purged + 1})`
+            );
+            arr.splice(i, 1);
+            st.writes++;
+            st.arrayAccesses++;
+            purged++;
+          } else {
+            yield makeStep(
+              st,
+              [i],
+              [i - 1],
+              -1,
+              'sorting',
+              arr[i],
+              `Eleman #${i} (${arr[i]}) düzene uyuyor, hayatta kaldı (${arr.length} eleman kaldı).`
+            );
+            i++;
+          }
+        }
+        st.passLabel = `${arr.length}/${n} Hayatta Kaldı`;
+        break;
+      }
+
+      case 'thanos': {
+        const isSorted = () => {
+          for (let i = 0; i < arr.length - 1; i++) {
+            if (compareIdx(i, i + 1) > 0) return false;
+          }
+          return true;
+        };
+
+        let snaps = 0;
+        while (arr.length > 1 && !isSorted()) {
+          snaps++;
+          st.passLabel = `Parmak Şıklatma #${snaps}`;
+          const targetRemove = Math.floor(arr.length / 2);
+          const victimIndices = new Set<number>();
+          while (victimIndices.size < targetRemove) {
+            victimIndices.add(Math.floor(Math.random() * arr.length));
+          }
+          const victims = Array.from(victimIndices);
+          // Flash the doomed half in red before snapping them away
+          yield makeStep(
+            st,
+            victims,
+            [],
+            -1,
+            'sorting',
+            arr[victims[0] ?? 0],
+            `Parmak Şıklatma #${snaps}: Denge için ${targetRemove} eleman toz oluyor...`
+          );
+
+          const survivors: number[] = [];
+          for (let i = 0; i < arr.length; i++) {
+            st.arrayAccesses++;
+            if (!victimIndices.has(i)) {
+              survivors.push(arr[i]);
+            }
+          }
+          arr.length = 0;
+          arr.push(...survivors);
+          st.writes += survivors.length;
+
+          yield makeStep(
+            st,
+            [Math.floor(arr.length / 2)],
+            [],
+            -1,
+            'sorting',
+            arr[Math.floor(arr.length / 2)] ?? null,
+            `Şıklatma #${snaps} sonrası ${arr.length} eleman hayatta kaldı.`
+          );
+        }
+        st.passLabel = `${snaps} Şıklatma · ${arr.length} Kaldı`;
+        break;
+      }
+
+      case 'miracle': {
+        const miracleQuips = [
+          'Kozmik ışınların RAM bitlerini sıralaması bekleniyor...',
+          'Hiçbir elemana dokunulmadı; kuantum tünelleme hâlâ bekleniyor...',
+          'Sabır en büyük erdemdir, bir kez daha kontrol ediliyor...',
+          'Hâlâ mucize yok. Belki monitöre üflemek işe yarar?',
+          'Evrenin entropisi bu taramada da tersine dönmedi...',
+        ];
+        let scan = 0;
+        while (true) {
+          scan++;
+          st.passLabel = `Mucize Bekleyişi #${scan}`;
+          let sorted = true;
+          for (let i = 0; i < arr.length - 1; i++) {
+            const cmp = compareIdx(i, i + 1);
+            if (cmp > 0) {
+              sorted = false;
+              yield makeStep(
+                st,
+                [i, i + 1],
+                [],
+                -1,
+                'sorting',
+                arr[i],
+                `Tarama #${scan}: ${miracleQuips[(scan - 1) % miracleQuips.length]}`
+              );
+              break;
+            }
+          }
+          if (sorted) {
+            st.passLabel = 'Mucize Gerçekleşti!';
+            break;
+          }
+        }
+        break;
+      }
+
+      case 'stooge': {
+        function* stoogeRec(l: number, h: number): Generator<SortStep, void, void> {
+          if (l >= h) return;
+          if (compareIdx(l, h) > 0) {
+            swap(l, h);
+            yield makeStep(
+              st,
+              [l, h],
+              [],
+              -1,
+              'sorting',
+              arr[h],
+              `Stooge [${l}..${h}]: Uç elemanlar ters, takas edildi.`
+            );
+          } else {
+            yield makeStep(
+              st,
+              [l, h],
+              [],
+              -1,
+              'sorting',
+              arr[l],
+              `Stooge [${l}..${h}]: Uç elemanlar kontrol edildi.`
+            );
+          }
+          if (h - l + 1 > 2) {
+            const t = Math.floor((h - l + 1) / 3);
+            st.passLabel = `Üç Ahbap [${l}..${h}]`;
+            yield* stoogeRec(l, h - t);
+            yield* stoogeRec(l + t, h);
+            yield* stoogeRec(l, h - t);
+          }
+        }
+        yield* stoogeRec(0, n - 1);
+        break;
+      }
+
+      case 'gnome': {
+        let pos = 0;
+        st.passLabel = 'Bahçe Cücesi Yürüyüşü';
+        while (pos < arr.length) {
+          if (pos === 0 || compareIdx(pos, pos - 1) >= 0) {
+            yield makeStep(
+              st,
+              [pos],
+              pos > 0 ? [pos - 1] : [],
+              -1,
+              'sorting',
+              arr[pos],
+              `Cüce indeks ${pos} konumunda memnun, bir adım sağa ilerliyor.`
+            );
+            pos++;
+          } else {
+            swap(pos, pos - 1);
+            yield makeStep(
+              st,
+              [pos - 1, pos],
+              [],
+              -1,
+              'sorting',
+              arr[pos - 1],
+              `Saksılar ters! #${pos - 1} ve #${pos} takas edildi, cüce bir adım geri döndü.`
+            );
+            pos--;
+          }
+        }
+        break;
+      }
+
+      case 'pancake': {
+        function* flipPrefix(k: number): Generator<SortStep, void, void> {
+          let left = 0;
+          let right = k;
+          while (left < right) {
+            swap(left, right);
+            yield makeStep(
+              st,
+              [left, right],
+              [k],
+              -1,
+              'sorting',
+              arr[right],
+              `Spatula çevirme [0..${k}]: #${left} ve #${right} takla attı.`
+            );
+            left++;
+            right--;
+          }
+        }
+
+        for (let currSize = n; currSize > 1; currSize--) {
+          st.passLabel = `Pankek Yığını (${currSize})`;
+          let maxIdx = 0;
+          for (let i = 1; i < currSize; i++) {
+            if (compareIdx(i, maxIdx) > 0) {
+              maxIdx = i;
+            }
+          }
+          if (maxIdx !== currSize - 1) {
+            if (maxIdx > 0) {
+              yield* flipPrefix(maxIdx);
+            }
+            yield* flipPrefix(currSize - 1);
+          }
+        }
+        break;
+      }
+
+      case 'netlimiterlan': {
+        const finalCustomStats = yield* createNetlimiterlanGenerator({
+          arr,
+          read,
+          write,
+          compareIdx,
+          swap,
+          addAccess: (count = 1) => {
+            st.arrayAccesses += count;
+          },
+          addComparison: (count = 1) => {
+            st.comparisons += count;
+          },
+          getCounters: () => ({
+            comparisons: st.comparisons,
+            arrayAccesses: st.arrayAccesses,
+            writes: st.writes,
+            swaps: st.swaps,
+            steps: st.steps,
+            startTime: st.startTime,
+          }),
+          bumpStep: () => {
+            st.steps++;
+            return st.steps;
+          },
+          setPassLabel: (label: string) => {
+            st.passLabel = label;
+          },
+        });
+        st.customStats = finalCustomStats;
+        break;
+      }
     }
   }
 
-  // Iconic Sound of Sorting green verification sweep (matching the user's attached screenshot!)
+  // Iconic Sound of Sorting green verification sweep (uses live arr.length for Stalin/Thanos!)
+  const finalLen = arr.length;
   st.passLabel = 'Doğrulama Taraması';
-  for (let i = 0; i < n; i++) {
+  if (st.customStats) {
+    st.customStats = { ...st.customStats, activeStage: 'verify' };
+  }
+  for (let i = 0; i < finalLen; i++) {
     yield makeStep(
       st,
       [i],
@@ -921,26 +1397,34 @@ export function* createSortGenerator(
       i,
       'verifying',
       arr[i],
-      `Sıralama doğrulanıyor: ${i + 1} / ${n}`,
-      i === n - 1
+      `Sıralama doğrulanıyor: ${i + 1} / ${finalLen}`,
+      i === finalLen - 1
     );
   }
 
+  const survivorSuffix =
+    finalLen < n ? ` (${n} elemandan ${finalLen} tanesi hayatta kaldı)` : '';
   st.passLabel = 'Tamamlandı';
+  if (st.customStats) {
+    st.customStats = { ...st.customStats, activeStage: 'done' };
+  }
   yield makeStep(
     st,
     [],
     [],
-    n - 1,
+    Math.max(0, finalLen - 1),
     'done',
     null,
-    `Sıralama doğrulandı (${st.comparisons.toLocaleString('tr-TR')} karşılaştırma, ${st.arrayAccesses.toLocaleString('tr-TR')} dizi erişimi).`,
+    `Sıralama doğrulandı${survivorSuffix} — ${st.comparisons.toLocaleString('tr-TR')} karşılaştırma, ${st.arrayAccesses.toLocaleString('tr-TR')} dizi erişimi.`,
     true
   );
 }
 
+const MAX_SYNC_BENCHMARK_STEPS = 45000;
+
 /**
  * Ultra-fast synchronous execution of an algorithm for real-time multi-algorithm benchmarking.
+ * Enforces a safety step cap so O(n!) / O(∞) humorous sorts never freeze the browser tab.
  */
 export function runBenchmarkSync(algorithmId: AlgorithmId, values: number[]): BenchmarkEntry {
   const meta = ALGORITHM_MAP[algorithmId];
@@ -956,13 +1440,22 @@ export function runBenchmarkSync(algorithmId: AlgorithmId, values: number[]): Be
     sortedness: 100,
     passLabel: 'Tamamlandı',
   };
+  let capped = false;
+  let survivingCount = values.length;
+  let stepGuard = 0;
 
   for (const step of gen) {
     if (step.phase === 'verifying') {
-      // Stop counting before verification sweep so CPU time reflects pure sorting
+      survivingCount = step.array.length;
       break;
     }
     lastMetrics = step.metrics;
+    survivingCount = step.array.length;
+    stepGuard++;
+    if (stepGuard >= MAX_SYNC_BENCHMARK_STEPS) {
+      capped = true;
+      break;
+    }
   }
 
   const cpuTimeMs = Math.max(0.01, Math.round((performance.now() - t0) * 100) / 100);
@@ -980,6 +1473,8 @@ export function runBenchmarkSync(algorithmId: AlgorithmId, values: number[]): Be
     spaceComplexity: meta.space,
     stable: meta.stable,
     comparisonBased: meta.comparisonBased,
+    capped,
+    survivingCount: survivingCount < values.length ? survivingCount : undefined,
   };
 }
 

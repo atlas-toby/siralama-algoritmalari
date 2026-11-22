@@ -9,7 +9,16 @@ export type AlgorithmId =
   | 'bubble'
   | 'selection'
   | 'cocktail'
-  | 'counting';
+  | 'counting'
+  | 'bogo'
+  | 'bozo'
+  | 'stalin'
+  | 'thanos'
+  | 'miracle'
+  | 'stooge'
+  | 'gnome'
+  | 'pancake'
+  | 'netlimiterlan';
 
 export type DistributionType =
   | 'random'
@@ -35,7 +44,15 @@ export interface AlgorithmMeta {
   id: AlgorithmId;
   name: string;
   englishName: string;
-  category: 'Dağıtım' | 'Böl ve Yönet' | 'Seçim / Yığın' | 'Eklemeli' | 'Değiş Tokuş' | 'Hibrit';
+  category:
+    | 'Dağıtım'
+    | 'Böl ve Yönet'
+    | 'Seçim / Yığın'
+    | 'Eklemeli'
+    | 'Değiş Tokuş'
+    | 'Hibrit'
+    | 'Mizahi / Egzotik'
+    | 'Custom';
   bestTime: string;
   avgTime: string;
   worstTime: string;
@@ -57,6 +74,14 @@ export interface TelemetryPoint {
   sortedness: number;
 }
 
+export interface CustomAlgorithmStats {
+  divideCount: number;
+  shuffleCount: number;
+  lockedSegments: number;
+  totalLeafSegments: number;
+  activeStage: 'idle' | 'divide' | 'shuffle' | 'lock' | 'merge' | 'verify' | 'done';
+}
+
 export interface SortMetrics {
   comparisons: number;
   arrayAccesses: number;
@@ -66,12 +91,14 @@ export interface SortMetrics {
   elapsedMs: number;
   sortedness: number;
   passLabel: string;
+  customStats?: CustomAlgorithmStats;
 }
 
 export interface SortStep {
   array: number[];
   activeIndices: number[];
   secondaryIndices: number[];
+  lockedIndices?: number[];
   verifiedUpTo: number;
   phase: 'sorting' | 'verifying' | 'done';
   soundValue: number | null;
@@ -137,6 +164,8 @@ export interface BenchmarkEntry {
   spaceComplexity: string;
   stable: boolean;
   comparisonBased: boolean;
+  capped?: boolean;
+  survivingCount?: number;
 }
 
 export interface ScalingPoint {

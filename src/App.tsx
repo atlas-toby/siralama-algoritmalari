@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ALGORITHM_MAP,
+  ALGORITHMS,
   createSortGenerator,
   runAllBenchmarksSync,
   runScalingBenchmark,
@@ -90,6 +91,7 @@ export default function App() {
   const [array, setArray] = useState<number[]>(() => [...dataset.values]);
   const [activeIndices, setActiveIndices] = useState<number[]>([]);
   const [secondaryIndices, setSecondaryIndices] = useState<number[]>([]);
+  const [lockedIndices, setLockedIndices] = useState<number[]>([]);
   const [verifiedUpTo, setVerifiedUpTo] = useState<number>(-1);
   const [status, setStatus] = useState<SimulationStatus>('idle');
   const [metrics, setMetrics] = useState<SortMetrics>(() => ({
@@ -211,6 +213,7 @@ export default function App() {
       setArray([...sourceDataset.values]);
       setActiveIndices([]);
       setSecondaryIndices([]);
+      setLockedIndices([]);
       setVerifiedUpTo(-1);
       setStatus('idle');
       setTelemetry([]);
@@ -338,6 +341,7 @@ export default function App() {
           setArray([...lastStep.array]);
           setActiveIndices(lastStep.activeIndices);
           setSecondaryIndices(lastStep.secondaryIndices);
+          setLockedIndices(lastStep.lockedIndices ?? []);
           setVerifiedUpTo(lastStep.verifiedUpTo);
           setStepNote(lastStep.note);
 
@@ -417,6 +421,7 @@ export default function App() {
       ];
       setTelemetry([...telemetryRef.current]);
       setArray([...dataset.values]);
+      setLockedIndices([]);
       setVerifiedUpTo(-1);
       runStartRef.current = performance.now();
       generatorRef.current = createSortGenerator(algorithmId, dataset.values);
@@ -457,6 +462,7 @@ export default function App() {
     setArray([...step.array]);
     setActiveIndices(step.activeIndices);
     setSecondaryIndices(step.secondaryIndices);
+    setLockedIndices(step.lockedIndices ?? []);
     setVerifiedUpTo(step.verifiedUpTo);
     setStepNote(step.note);
     setMetrics({
@@ -533,7 +539,7 @@ export default function App() {
     target: 'simulation' | 'analytics'
   ) => {
     setDistribution('custom');
-    setArraySize(Math.min(512, Math.max(16, profile.values.length)));
+    setArraySize(Math.min(512, Math.max(4, profile.values.length)));
     setDataset(profile);
     resetSimulationState(
       profile,
@@ -548,7 +554,7 @@ export default function App() {
   const handleRunBenchmarks = () => {
     const results = runAllBenchmarksSync(dataset.values);
     setBenchmarks(results);
-    showToast(`11 algoritma "${dataset.label}" üzerinde yeniden ölçüldü.`);
+    showToast(`${ALGORITHMS.length} algoritma "${dataset.label}" üzerinde yeniden ölçüldü.`);
   };
 
   const handleRunScalingTest = () => {
@@ -627,6 +633,7 @@ export default function App() {
             array={array}
             activeIndices={activeIndices}
             secondaryIndices={secondaryIndices}
+            lockedIndices={lockedIndices}
             verifiedUpTo={verifiedUpTo}
             algorithmId={algorithmId}
             onChangeAlgorithm={handleChangeAlgorithm}

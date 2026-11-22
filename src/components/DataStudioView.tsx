@@ -282,7 +282,7 @@ export function DataStudioView({
                 className="m3-focus inline-flex items-center gap-2 rounded-full bg-[var(--md-sys-color-secondary-container)] px-5 py-2.5 text-sm font-medium text-[var(--md-sys-color-on-secondary-container)] transition-opacity hover:opacity-90 disabled:opacity-40 whitespace-nowrap shrink-0 cursor-pointer disabled:cursor-not-allowed"
               >
                 <BarChart3 className="h-4 w-4" aria-hidden="true" />
-                <span>11 Algoritmayla Kıyasla</span>
+                <span>Tüm Algoritmalarla Kıyasla</span>
               </button>
             </div>
           </div>

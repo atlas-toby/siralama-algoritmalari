@@ -91,7 +91,7 @@ export function computeDatasetStats(values: number[]): DatasetStats {
 }
 
 export function generateDistribution(type: Exclude<DistributionType, 'custom'>, size: number): number[] {
-  const n = Math.max(8, Math.min(1024, Math.floor(size)));
+  const n = Math.max(4, Math.min(1024, Math.floor(size)));
   const arr: number[] = [];
 
   switch (type) {

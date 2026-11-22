@@ -5,6 +5,7 @@ interface SortingCanvasProps {
   array: number[];
   activeIndices: number[];
   secondaryIndices: number[];
+  lockedIndices?: number[];
   verifiedUpTo: number;
   algorithmName: string;
   metrics: SortMetrics;
@@ -26,6 +27,7 @@ export function SortingCanvas({
   array,
   activeIndices,
   secondaryIndices,
+  lockedIndices = [],
   verifiedUpTo,
   algorithmName,
   metrics,
@@ -93,6 +95,7 @@ export function SortingCanvas({
 
       const activeSet = new Set<number>(activeIndices);
       const secondarySet = new Set<number>(secondaryIndices);
+      const lockedSet = new Set<number>(lockedIndices);
 
       if (visualMode === 'classic' || visualMode === 'spectrum') {
         const barW = width / n;
@@ -125,6 +128,8 @@ export function SortingCanvas({
             ctx.fillStyle = '#FF1E1E';
           } else if (secondarySet.has(i)) {
             ctx.fillStyle = '#F59E0B';
+          } else if (lockedSet.has(i)) {
+            ctx.fillStyle = '#38BDF8';
           } else {
             ctx.fillStyle =
               visualMode === 'spectrum'
@@ -151,6 +156,8 @@ export function SortingCanvas({
             ctx.fillStyle = '#FF1E1E';
           } else if (secondarySet.has(i)) {
             ctx.fillStyle = '#F59E0B';
+          } else if (lockedSet.has(i)) {
+            ctx.fillStyle = '#38BDF8';
           } else {
             ctx.fillStyle = '#FFFFFF';
           }
@@ -186,6 +193,8 @@ export function SortingCanvas({
             ctx.strokeStyle = '#FF1E1E';
           } else if (secondarySet.has(i)) {
             ctx.strokeStyle = '#F59E0B';
+          } else if (lockedSet.has(i)) {
+            ctx.strokeStyle = '#38BDF8';
           } else {
             ctx.strokeStyle = `hsl(${Math.round(norm * 290)}, 85%, 60%)`;
           }
@@ -227,6 +236,7 @@ export function SortingCanvas({
     array,
     activeIndices,
     secondaryIndices,
+    lockedIndices,
     verifiedUpTo,
     algorithmName,
     metrics,

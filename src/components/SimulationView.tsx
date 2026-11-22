@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Camera,
   Database,
@@ -41,6 +41,7 @@ interface SimulationViewProps {
   array: number[];
   activeIndices: number[];
   secondaryIndices: number[];
+  lockedIndices: number[];
   verifiedUpTo: number;
   algorithmId: AlgorithmId;
   onChangeAlgorithm: (id: AlgorithmId) => void;
@@ -100,12 +101,34 @@ const AUDIO_SCALES: { id: AudioScale; label: string }[] = [
   { id: 'linear', label: 'Doğrusal' },
 ];
 
-const QUICK_ALGS: AlgorithmId[] = ['radixLSD', 'quick', 'merge', 'heap', 'tim', 'bubble'];
+const QUICK_CLASSIC_ALGS: AlgorithmId[] = ['radixLSD', 'quick', 'merge', 'heap', 'tim', 'bubble'];
+const QUICK_HUMOR_ALGS: AlgorithmId[] = [
+  'bogo',
+  'bozo',
+  'stalin',
+  'thanos',
+  'miracle',
+  'stooge',
+  'gnome',
+  'pancake',
+];
+const QUICK_CUSTOM_ALGS: AlgorithmId[] = ['netlimiterlan'];
+
+const CUSTOM_STAGE_LABELS: Record<string, string> = {
+  idle: 'Hazır',
+  divide: 'Bölme Aşaması',
+  shuffle: 'Rastgele Karıştırma',
+  lock: 'Parça Kilitlendi',
+  merge: 'Birleştirme (Merge)',
+  verify: 'Doğrulama',
+  done: 'Tamamlandı',
+};
 
 export function SimulationView({
   array,
   activeIndices,
   secondaryIndices,
+  lockedIndices,
   verifiedUpTo,
   algorithmId,
   onChangeAlgorithm,
@@ -145,6 +168,26 @@ export function SimulationView({
 }: SimulationViewProps) {
   const activeMeta = ALGORITHM_MAP[algorithmId];
   const isRunning = status === 'running' || status === 'verifying';
+  const [quickTab, setQuickTab] = useState<'classic' | 'humor' | 'custom'>(
+    activeMeta.category === 'Custom'
+      ? 'custom'
+      : activeMeta.category === 'Mizahi / Egzotik'
+        ? 'humor'
+        : 'classic'
+  );
+
+  const classicAlgs = ALGORITHMS.filter(
+    (a) => a.category !== 'Mizahi / Egzotik' && a.category !== 'Custom'
+  );
+  const humorAlgs = ALGORITHMS.filter((a) => a.category === 'Mizahi / Egzotik');
+  const customAlgs = ALGORITHMS.filter((a) => a.category === 'Custom');
+  const isNetlimiterlan = algorithmId === 'netlimiterlan';
+  const recommendedSmallN =
+    algorithmId === 'bogo' || algorithmId === 'bozo'
+      ? 7
+      : algorithmId === 'stooge'
+        ? 32
+        : null;
 
   return (
     <div className="space-y-6">
@@ -196,6 +239,7 @@ export function SimulationView({
             array={array}
             activeIndices={activeIndices}
             secondaryIndices={secondaryIndices}
+            lockedIndices={lockedIndices}
             verifiedUpTo={verifiedUpTo}
             algorithmName={activeMeta.name}
             metrics={metrics}
@@ -204,6 +248,31 @@ export function SimulationView({
             visualMode={visualMode}
             canvasRef={canvasRef}
           />
+
+          {/* High-contrast State Color Legend for Netlimiterlan Sort */}
+          {isNetlimiterlan && (
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-lowest)] px-4 py-2.5 text-xs text-[var(--md-sys-color-on-surface)]">
+              <span className="font-semibold text-[var(--md-sys-color-on-surface-variant)]">
+                Durum Renkleri:
+              </span>
+              <span className="inline-flex items-center gap-2">
+                <span className="h-3 w-3 rounded-[3px] bg-[#F59E0B]" aria-hidden="true" />
+                <span>Bölünen / Karıştırılan Alt Parça</span>
+              </span>
+              <span className="inline-flex items-center gap-2">
+                <span className="h-3 w-3 rounded-[3px] bg-[#38BDF8]" aria-hidden="true" />
+                <span>Sıralanıp Kilitlenen Parça</span>
+              </span>
+              <span className="inline-flex items-center gap-2">
+                <span className="h-3 w-3 rounded-[3px] bg-[#FF1E1E]" aria-hidden="true" />
+                <span>Merge Karşılaştırması</span>
+              </span>
+              <span className="inline-flex items-center gap-2">
+                <span className="h-3 w-3 rounded-[3px] bg-[#00E600]" aria-hidden="true" />
+                <span>Final Sıralı Durum</span>
+              </span>
+            </div>
+          )}
 
           {/* M3 Playback & Visual Mode Control Bar */}
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-lowest)] p-3.5">
@@ -332,6 +401,52 @@ export function SimulationView({
                 </div>
               </div>
             </div>
+
+            {/* Dedicated Live Statistics Row for Netlimiterlan Sort */}
+            {isNetlimiterlan && (
+              <div className="mt-4 grid grid-cols-2 gap-4 border-t border-[var(--md-sys-color-outline-variant)] pt-4 sm:grid-cols-4 sm:divide-x sm:divide-[var(--md-sys-color-outline-variant)]">
+                <div className="sm:pr-4">
+                  <div className="text-xs font-medium text-[var(--md-sys-color-on-surface-variant)]">
+                    Toplam Bölme (Divide)
+                  </div>
+                  <div className="mt-1 font-mono-tabular text-xl font-semibold text-[#D97706] dark:text-[#F59E0B]">
+                    {(metrics.customStats?.divideCount ?? 0).toLocaleString('tr-TR')}
+                  </div>
+                </div>
+                <div className="sm:px-4">
+                  <div className="text-xs font-medium text-[var(--md-sys-color-on-surface-variant)]">
+                    Karıştırma (Shuffle)
+                  </div>
+                  <div className="mt-1 font-mono-tabular text-xl font-semibold text-[#DC2626] dark:text-[#F87171]">
+                    {(metrics.customStats?.shuffleCount ?? 0).toLocaleString('tr-TR')}
+                  </div>
+                </div>
+                <div className="sm:px-4">
+                  <div className="text-xs font-medium text-[var(--md-sys-color-on-surface-variant)]">
+                    Kilitlenen Parça
+                  </div>
+                  <div className="mt-1 font-mono-tabular text-xl font-semibold text-[#0284C7] dark:text-[#38BDF8]">
+                    {(metrics.customStats?.lockedSegments ?? 0).toLocaleString('tr-TR')}
+                    {metrics.customStats?.totalLeafSegments ? (
+                      <span className="ml-1 text-xs font-normal text-[var(--md-sys-color-on-surface-variant)]">
+                        / {metrics.customStats.totalLeafSegments.toLocaleString('tr-TR')}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="sm:pl-4">
+                  <div className="text-xs font-medium text-[var(--md-sys-color-on-surface-variant)]">
+                    Aktif Aşama
+                  </div>
+                  <div className="mt-1 font-display text-sm font-semibold text-[var(--md-sys-color-on-surface)]">
+                    {CUSTOM_STAGE_LABELS[metrics.customStats?.activeStage ?? 'idle'] ?? 'Hazır'}
+                  </div>
+                  <div className="text-[11px] text-[var(--md-sys-color-on-surface-variant)]">
+                    Maks. yaprak boyutu ≤ 3
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Live step explanation line */}
             <div className="mt-4 border-t border-[var(--md-sys-color-outline-variant)] pt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--md-sys-color-on-surface-variant)]">
@@ -467,37 +582,111 @@ export function SimulationView({
               <select
                 id="algorithm-select"
                 value={algorithmId}
-                onChange={(e) => onChangeAlgorithm(e.target.value as AlgorithmId)}
+                onChange={(e) => {
+                  const next = e.target.value as AlgorithmId;
+                  const cat = ALGORITHM_MAP[next].category;
+                  setQuickTab(
+                    cat === 'Custom'
+                      ? 'custom'
+                      : cat === 'Mizahi / Egzotik'
+                        ? 'humor'
+                        : 'classic'
+                  );
+                  onChangeAlgorithm(next);
+                }}
                 className="m3-focus mt-2 w-full rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)] px-3.5 py-2.5 text-sm font-medium text-[var(--md-sys-color-on-surface)] cursor-pointer"
               >
-                {ALGORITHMS.map((alg) => (
-                  <option key={alg.id} value={alg.id}>
-                    {alg.name} ({alg.avgTime})
-                  </option>
-                ))}
+                <optgroup label="Klasik ve Üretim Algoritmaları">
+                  {classicAlgs.map((alg) => (
+                    <option key={alg.id} value={alg.id}>
+                      {alg.name} ({alg.avgTime})
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="Mizahi ve Egzotik Algoritmalar">
+                  {humorAlgs.map((alg) => (
+                    <option key={alg.id} value={alg.id}>
+                      {alg.name} ({alg.avgTime})
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="Custom">
+                  {customAlgs.map((alg) => (
+                    <option key={alg.id} value={alg.id}>
+                      {alg.name} ({alg.avgTime})
+                    </option>
+                  ))}
+                </optgroup>
               </select>
             </div>
 
-            {/* Quick algorithm selector buttons */}
-            <div className="grid grid-cols-2 gap-1.5">
-              {QUICK_ALGS.map((id) => {
-                const item = ALGORITHM_MAP[id];
-                const selected = algorithmId === id;
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => onChangeAlgorithm(id)}
-                    className={`m3-focus rounded-xl px-3 py-2 text-left text-xs font-medium transition-colors truncate cursor-pointer ${
-                      selected
-                        ? 'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)]'
-                        : 'bg-[var(--md-sys-color-surface-container-low)] text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-container)] hover:text-[var(--md-sys-color-on-surface)]'
-                    }`}
-                  >
-                    {item.name}
-                  </button>
-                );
-              })}
+            {/* M3 Segmented Tab: Klasik vs Mizahi vs Custom Quick-Picks */}
+            <div className="space-y-2">
+              <div
+                role="group"
+                aria-label="Algoritma grubu"
+                className="grid grid-cols-3 gap-1 rounded-full border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)] p-0.5"
+              >
+                <button
+                  type="button"
+                  onClick={() => setQuickTab('classic')}
+                  className={`m3-focus rounded-full py-1.5 text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    quickTab === 'classic'
+                      ? 'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)]'
+                      : 'text-[var(--md-sys-color-on-surface-variant)] hover:text-[var(--md-sys-color-on-surface)]'
+                  }`}
+                >
+                  Klasik ({classicAlgs.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQuickTab('humor')}
+                  className={`m3-focus rounded-full py-1.5 text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    quickTab === 'humor'
+                      ? 'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)]'
+                      : 'text-[var(--md-sys-color-on-surface-variant)] hover:text-[var(--md-sys-color-on-surface)]'
+                  }`}
+                >
+                  Mizahi ({humorAlgs.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQuickTab('custom')}
+                  className={`m3-focus rounded-full py-1.5 text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    quickTab === 'custom'
+                      ? 'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)]'
+                      : 'text-[var(--md-sys-color-on-surface-variant)] hover:text-[var(--md-sys-color-on-surface)]'
+                  }`}
+                >
+                  Custom ({customAlgs.length})
+                </button>
+              </div>
+
+              <div className={quickTab === 'custom' ? 'grid grid-cols-1 gap-1.5' : 'grid grid-cols-2 gap-1.5'}>
+                {(quickTab === 'classic'
+                  ? QUICK_CLASSIC_ALGS
+                  : quickTab === 'humor'
+                    ? QUICK_HUMOR_ALGS
+                    : QUICK_CUSTOM_ALGS
+                ).map((id) => {
+                  const item = ALGORITHM_MAP[id];
+                  const selected = algorithmId === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => onChangeAlgorithm(id)}
+                      className={`m3-focus rounded-xl px-3 py-2 text-left text-xs font-medium transition-colors truncate cursor-pointer ${
+                        selected
+                          ? 'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)]'
+                          : 'bg-[var(--md-sys-color-surface-container-low)] text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-container)] hover:text-[var(--md-sys-color-on-surface)]'
+                      }`}
+                    >
+                      {item.name}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Conceptual note */}
@@ -508,6 +697,17 @@ export function SimulationView({
               <p className="mt-1 text-xs leading-relaxed text-[var(--md-sys-color-on-surface-variant)]">
                 {activeMeta.howItWorks}
               </p>
+
+              {recommendedSmallN !== null && array.length > recommendedSmallN && (
+                <button
+                  type="button"
+                  onClick={() => onChangeArraySize(recommendedSmallN)}
+                  className="m3-focus mt-2.5 w-full rounded-full bg-[var(--md-sys-color-secondary-container)] px-3.5 py-2 text-xs font-medium text-[var(--md-sys-color-on-secondary-container)] transition-opacity hover:opacity-90 cursor-pointer"
+                >
+                  Bitişini görmek için N={recommendedSmallN} ile dene
+                </button>
+              )}
+
               <div className="mt-3 grid grid-cols-3 gap-2 border-t border-[var(--md-sys-color-outline-variant)] pt-3 text-xs">
                 <div>
                   <span className="block text-[var(--md-sys-color-on-surface-variant)]">En İyi</span>
@@ -576,15 +776,15 @@ export function SimulationView({
               <input
                 id="size-slider"
                 type="range"
-                min={16}
+                min={6}
                 max={512}
-                step={8}
+                step={2}
                 value={arraySize}
                 onChange={(e) => onChangeArraySize(Number(e.target.value))}
                 className="m3-slider"
               />
               <div className="mt-1 flex justify-between text-[11px] text-[var(--md-sys-color-on-surface-variant)]">
-                <span>16</span>
+                <span>6 (Bogo)</span>
                 <span>256</span>
                 <span>512</span>
               </div>

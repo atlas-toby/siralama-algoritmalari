@@ -48,13 +48,17 @@ export function deriveReportInsights(
     }
   }
 
-  if (benchmarks.length > 0) {
-    const byAccess = [...benchmarks].sort((a, b) => a.arrayAccesses - b.arrayAccesses);
-    const byWrites = [...benchmarks].sort((a, b) => a.writes - b.writes);
-    const byTime = [...benchmarks].sort((a, b) => a.cpuTimeMs - b.cpuTimeMs);
+  const validBenchmarks = benchmarks.filter(
+    (b) => !b.capped && b.survivingCount === undefined
+  );
+
+  if (validBenchmarks.length > 0) {
+    const byAccess = [...validBenchmarks].sort((a, b) => a.arrayAccesses - b.arrayAccesses);
+    const byWrites = [...validBenchmarks].sort((a, b) => a.writes - b.writes);
+    const byTime = [...validBenchmarks].sort((a, b) => a.cpuTimeMs - b.cpuTimeMs);
 
     insights.push(
-      `Bu veri setinde (N=${dataset.stats.count}, düzensizlik %${dataset.stats.disorderPct}) en az dizi erişimini ${byAccess[0].algorithmName} (${byAccess[0].arrayAccesses.toLocaleString('tr-TR')} erişim) sağladı.`
+      `Bu veri setinde (N=${dataset.stats.count}, düzensizlik %${dataset.stats.disorderPct}) kayıpsız sıralama yapan algoritmalar arasında en az dizi erişimini ${byAccess[0].algorithmName} (${byAccess[0].arrayAccesses.toLocaleString('tr-TR')} erişim) sağladı.`
     );
     insights.push(
       `En düşük yazma maliyeti ${byWrites[0].algorithmName} (${byWrites[0].writes.toLocaleString('tr-TR')} yazma), en hızlı ham yürütme süresi ise ${byTime[0].algorithmName} (${byTime[0].cpuTimeMs.toFixed(2)} ms) ile elde edildi.`
