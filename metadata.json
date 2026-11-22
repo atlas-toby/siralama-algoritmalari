@@ -1,0 +1,6 @@
+{
+  "name": "SıraLab — Etkileşimli Algoritma Simülasyonu ve Analitik",
+  "description": "Sound of Sorting stilinde etkileşimli sıralama algoritması simülasyonu, özel veri test stüdyosu, gerçek zamanlı interaktif grafikler ve indirilebilir analitik rapor paneli.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
